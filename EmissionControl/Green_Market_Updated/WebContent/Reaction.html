@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script type="text/javascript">
+  	var i=0;
+  	function convert()
+  	{
+  		var sub="₀₁₂₃₄₅₆₇₈₉";
+  		var norm="0123456789";
+  		var j=0;
+  		var x=document.getElementById("reaction_inp").value;
+  		var k="";
+  		var y=x.replace(/\s/g,'');
+  		for(j=0;j<y.length;j++)
+		{	
+			if(y.charAt(j)==sub.charAt(0))
+			{
+				k=k+"0";
+			}
+			else if(y.charAt(j)==sub.charAt(1))
+			{
+				k=k+"1";
+			}
+			else if(y.charAt(j)==sub.charAt(2))
+			{
+				k=k+"2";
+			}
+			else if(y.charAt(j)==sub.charAt(3))
+			{
+				k=k+"3";
+			}
+			else if(y.charAt(j)==sub.charAt(4))
+			{
+				k=k+"4";
+			}
+			else if(y.charAt(j)==sub.charAt(5))
+			{
+				k=k+"5";
+			}
+			else if(y.charAt(j)==sub.charAt(6))
+			{
+				k=k+"6";
+			}
+			else if(y.charAt(j)==sub.charAt(7))
+			{
+				k=k+"7";
+			}
+			else if(y.charAt(j)==sub.charAt(8))
+			{
+				k=k+"8";
+			}
+			else if(y.charAt(j)==sub.charAt(9))
+			{
+				k=k+"9";
+			}
+			else
+			{
+				k=k+y.charAt(j);
+			}
+		}
+		solve(k);
+			
+	}
+	$(document).ready(function(){
+		$("#reaction").on('input', "#reaction_inp", function(){
+			var s=$("#reaction_inp").val();
+			var l=s.length;
+			var j=0;
+			var flag=0;
+			for(j=0;j<l;j++)
+			{
+				if(s.charAt(j)=='>')
+				{
+					flag=1;
+				}
+			}
+			if(flag==0||s.charAt(l-1)=='>')
+			{
+				if(s.charAt(l-1)=='+'||s.charAt(l-1)=='>')
+				{
+					i=i+1;
+  					var j=i.toString();
+  					var template='<span class="quantity">\n' +
+  					'<input type="text" name="quantity'+j+'" class="abc" id="quantity'+j+'" placeholder=" moles R'+j+'" size="5" required>\n' +
+  					'</span>';
+  					$("#append").append(template);
+  					$("#hide").val(j);
+  					$('.abc').css({'margin-left':'10px'}); // Login form
+
+				}
+			}
+		});
+	});
+	function solve(x) {
+	//firstly we find bigNumber, which will be all numbers multiplied together, in order to assume the last element is a constant amount of that
+	bigNumber = 1;
+	arrayOfNumbers = new Set(x.split(/\D+/g));
+	arrayOfNumbers.delete("");
+	for (let i of arrayOfNumbers) bigNumber *= parseInt(i);
+	
+	//first actual step, we split into left hand side and right hand side, and then into separate molecules
+	//number of molecules is number of variables, number of elements is number of equations, variables refer to the coefficients of the chemical equation
+	//note, the structure of this is changed a lot in the golfed version since right is the same as negative left
+	left = x.split("->")[0].split("+");
+	righ = x.split("->")[1].split("+");
+	molecules = left.length + righ.length;
+	
+	//then let's find what elements there are - this will also become how many equations we have, or the columns of our matrix minus one
+	//we replace all the non-element characters, and then split based on the uppercase characters
+	//this also sometimes adds a "" to the array, we don't need that so we just delete it
+	//turn into a set in order to remove repeats
+	elems = new Set(x.replace(/\d+|\+|->/g,"").match(/([A-Z][a-z]*)/g));
+	elems.delete("");
+	
+	rrefArray = [];//first index is rows, second index columns - each row is an equation x*(A11)+y*(A21)+z*(A31)=A41 etc etc, to solve for xyz as coefficients
+	//loop thru the elements, since for each element we'll have an equation, or a row in the array
+	for (let elem of elems) {
+		buildArr = [];
+		//loop thru the sides
+		for (let molecule of left) {
+			//let's see how many of element elem are in molecule molecule
+			//ASSUMPTION: each element happens only once per molecule (no shenanigans like CH3COOH)
+			index = molecule.indexOf(elem);
+			if (index == -1) buildArr.push(0);
+			else {
+				index += elem.length;
+				numberAfterElement = molecule.substring(index).match(/^\d+/g);
+				if (numberAfterElement == null) buildArr.push(1);
+				else buildArr.push(parseInt(numberAfterElement));
+			}
+		}
+		//same for right, except each item is negative
+		for (let molecule of righ) {
+			index = molecule.indexOf(elem);
+			if (index == -1) buildArr.push(0);
+			else {
+				index += elem.length;
+				numberAfterElement = molecule.substring(index).match(/^\d+/g);
+				if (numberAfterElement == null) buildArr.push(-1);
+				else buildArr.push(parseInt(numberAfterElement)*(-1));
+			}
+		}
+		rrefArray.push(buildArr);
+	}
+	
+	//Gauss-Jordan algorithm starts here, on rrefArray
+	for (pivot=0;pivot<Math.min(molecules, elems.size);pivot++) {
+		//for each pivot element, first we search for a row in which the pivot is nonzero
+		//this is guaranteed to exist because there are no empty molecules
+		for (i=pivot;i<rrefArray.length;i++) {
+			row = rrefArray[i];
+			if (row[pivot] != 0) {
+				workingOnThisRow = rrefArray.splice(rrefArray.indexOf(row), 1)[0];
+			}
+		}
+		//then multiply elements so the pivot element of workingOnThisRow is equal to bigNumber we determined above, this is all to keep everything in integer-space
+		multiplyWhat = bigNumber / workingOnThisRow[pivot]
+		for (i=0;i<workingOnThisRow.length;i++) workingOnThisRow[i] *= multiplyWhat
+		//then we make sure the other rows don't have this column as a number, the other rows have to be zero, if not we can normalize to bigNumber and subtract
+		for (let i in rrefArray) {
+			row = rrefArray[i];
+			if (row[pivot] != 0) {
+				multiplyWhat = bigNumber / row[pivot]
+				for (j=0;j<row.length;j++) {
+					row[j] *= multiplyWhat;
+					row[j] -= workingOnThisRow[j];
+					row[j] /= multiplyWhat;
+				}
+				rrefArray[i]=row;
+			}
+		}
+		//finally we put the row back
+		rrefArray.splice(pivot, 0, workingOnThisRow);
+	}
+	
+	//and finally we're done!
+	//sanity check to make sure it succeeded, if not then the matrix is insolvable
+	if (rrefArray[0][elems.size] == 0 || rrefArray[0][elems.size] == undefined) return "Nope!";
+	
+	//last step - get the results of the rref, which will be the coefficients of em except for the last one, which would be bigNumber (1 with typical implementation of the algorithm)
+	bigNumber *= -1;
+	gcd_calc = function(a, b) {
+		if (!b) return a;
+		return gcd_calc(b, a%b);
+	};
+	coEffs = [];
+	gcd = bigNumber;
+	for (i=0;i<rrefArray.length;i++) {
+		num = rrefArray[i][molecules-1];
+		coEffs.push(num);
+		gcd = gcd_calc(gcd, num)
+	}
+	coEffs.push(bigNumber);
+	for (i=0;i<coEffs.length;i++) coEffs[i] /= gcd;
+	
+	//now we make it human readable
+	//we have left and right from before, let's not forget those!
+	out = "";
+	for (i=0;i<coEffs.length;i++) {
+		coEff = coEffs[i];
+		if (coEff != 1) out += coEff;
+		out += left.shift();
+		if (left.length == 0 && righ.length != 0) {
+			out += "->";
+			left = righ;
+		} else if (i != coEffs.length-1) out += "+";
+	}
+	document.getElementById("reaction_input").value=out;
+	window.alert(out);
+	document.getElementById("reaction_input").value=out;
+}
+
+  	function add_arrow(e) {
+  		var y="->";
+  		
+  		var data=document.getElementById("reaction_inp").value;
+  		document.getElementById("reaction_inp").value=data+" "+y;
+  		// body...
+  	}
+  	$(document).ready(function(){
+  		$("#per_table").on('click', ".atom", function(e){
+  			var s=$(this).val();
+  			//window.alert(s);
+  			$("#reaction_inp").val($("#reaction_inp").val() + s);
+  		});
+  	});
+  	$(document).ready(function(){
+  		$("#reaction").on('input', "#reaction_inp", function(e){
+  			var x=$(this).val();
+  
+  			var temp="";
+  			var i=x.length;
+  			var j=0;
+  			var sub="₀₁₂₃₄₅₆₇₈₉"
+  			if(x.charAt(i-1)>='0'&&x.charAt(i-1)<='9')
+    		{
+   
+
+    			for(j=0;j<i-1;j++)
+      			{
+      			temp=temp+x.charAt(j);
+      			}
+    			var k=x.charAt(i-1);
+    			var string=temp+sub.charAt(k-'0');
+    			$(this).val(string);
+    //window.alert(string);
+    
+    		}
+  		});
+  	});
+
+ 
+
+
+
+  	$(document).ready(function(){
+  		$(".show_button").click(function(){
+  			$("#p_table").show()
+  		});
+  	});
+  </script>
+  <style>
+  
+img{
+	
+    position: relative;
+    width: 50px;
+    height:50px;
+}
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width:790px;
+  margin-left:600px;
+  margin-top: -60px;
+}
+
+li {
+  float: left;
+  padding-left: 50px;
+}
+
+li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  color:grey;
+  font-size:20px;
+}
+
+li a:hover {
+  color: black;
+  text-decoration:none;
+
+}
+.product img{
+	width:100px;
+	height: 100px;
+}
+li a:focus{
+	text-decoration:none;
+}
+#p_table
+{
+	margin-top:-10px;
+	margin-left:378px;
+	width: 765px;
+	border:	1px solid #ccc!important;
+	border-radius: 8px;
+	height: 340px;
+	display: none;
+
+}
+
+table
+{
+	margin-left:20px;
+	margin-right: 20px;
+	margin-top: 35px;
+}
+.atom 
+{
+	font-size: 13px;
+	width: 38px;
+	height: 24px;
+	text-align: center;
+	background-color:#f8f8f8;
+	border:1px solid #eee;
+	border-top: none;
+	text-align:center;
+	margin: 1px;
+}
+.noatom
+{
+	font-size: 13px;
+	width: 38px;
+	/*height: 24px;*/
+	display: block;
+	margin: 1px;
+	text-align: center;
+}
+.show_button
+{
+	margin-top:30px;
+	margin-left:377.5px;
+	width:766.5px;
+	font-size:30px;
+	font-weight: 900;
+}
+#reaction
+{
+	margin-left: 200px;
+	margin-top: 60px;
+	
+}
+#reaction_inp
+{
+	font-family: Georgia, "Times New Roman", Times, serif;
+	background: rgba(255,255,255,.1);
+	border: none;
+	border-radius: 4px;
+	font-size: 22px;
+	margin: 0;
+	outline: 0;
+	padding: 10px;
+	height:50px;
+	box-sizing: border-box; 
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box; 
+	background-color: #e8eeef;
+	color:#000000;
+	-webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.03) inset;
+	box-shadow: 0 1px 0 rgba(0,0,0,0.03) inset;
+	margin-bottom: 2px;
+	margin-left: 13.2%;
+}
+.atom
+{
+	outline:none;
+}
+
+.atom:active
+{
+	background-color: grey;
+}
+.arrow
+{
+	height: 45px;
+	margin-left: 20px;
+	float:right;
+	margin-right: 330px;
+	margin-top:3px;
+	width:40px;
+	font-size: 25px;
+}
+.go
+{
+	margin-left:40%;
+	height: 35px;
+	font-size: 20px;
+}
+
+.co{
+  padding: 8px;
+  text-align: left;
+  border: 1px solid #ddd;
+  font-size: 20px;
+  height: 30px;
+  }
+ 
+  #conc{
+  	border-collapse: collapse;
+  }
+  #append{
+  	margin-left: 200px;
+
+  }
+  .abc{
+  	margin-top: 10px;
+  	text-align: center;
+  }
+
+</style>
+  
+</head>
+
+
+<body>
+<img src="1.png">
+ <p style="font-size: 38px;margin-left: 50px;margin-top: -50px;font-family: Verdana;">GreenMarket</p>
+ <ul>
+
+  <li><a href="Profile.html">Profile</a></li>
+  <li><a href="Reaction.html">Reaction</a></li>
+  <li><a href="http://localhost:80/1/3b-products.php">Market Place</a></li>
+  <li><a href="#about">Cart</a></li>
+  <li><a href="#about">About Us</a></li>
+</ul>
+<button class="show_button btn btn-secondary">Show Periodic Table</button>
+<div id="p_table">
+<table id="per_table">
+<tr>
+<td><button type="button" class="atom" title="Hydrogen" value="H">H</button></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><span class="noatom"></span></td>
+<td><button type="button" class="atom" title="Helium" value="He">He</button></td>
+</tr>
+<tr>
+	<td><button type="button" class="atom" title="Lithium" value="Li">Li</button></td>
+	<td><button type="button" class="atom" title="Berelyium" value="Be">Be</button></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><button type="button" class="atom" title="Boron" value="B">B</button></td>
+	<td><button type="button" class="atom" title="Carbon" value="C">C</button></td>
+	<td><button type="button" class="atom" title="Nitrogen" value="N">N</button></td>
+	<td><button type="button" class="atom" title="Oxygen" value="O">O</button></td>
+	<td><button type="button" class="atom" title="Fluorine" value="F">F</button></td>
+	<td><button type="button" class="atom" title="Neon" value="Ne">Ne</button></td>
+</tr>
+<tr>
+	<td><button type="button" class="atom" title="Sodium" value="Na">Na</button></td>
+	<td><button type="button" class="atom" title="Magnesium" value="Mg">Mg</button></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><button type="button" class="atom" title="Aluminium" value="Al">Al</button></td>
+	<td><button type="button" class="atom" title="Silicon" value="Si">Si</button></td>
+	<td><button type="button" class="atom" title="Phosphorus" value="P">P</button></td>
+	<td><button type="button" class="atom" title="Sulphur" value="S">S</button></td>
+	<td><button type="button" class="atom" title="Chlorine" value="Cl">Cl</button></td>
+	<td><button type="button" class="atom" title="Argon" value="Ar">Ar</button></td>
+</tr>
+<tr>
+	<td><button type="button" class="atom" title="Potassium" value="K">K</button></td>
+	<td><button type="button" class="atom" title="Calcium" value="Ca">Ca</button></td>
+	<td><button type="button" class="atom" title="Scandium" value="Sc">Sc</button></td>
+	<td><button type="button" class="atom" title="Titanium" value="Ti">Ti</button></td>
+	<td><button type="button" class="atom" title="Vanadium" value="V">V</button></td>
+	<td><button type="button" class="atom" title="Chromium" value="Cr">Cr</button></td>
+	<td><button type="button" class="atom" title="Manganese" value="Mn">Mn</button></td>
+	<td><button type="button" class="atom" title="Iron" value="Fe">Fe</button></td>
+	<td><button type="button" class="atom" title="Cobalt" value="Co">Co</button></td>
+	<td><button type="button" class="atom" title="Nickel" value="Ni">Ni</button></td>
+	<td><button type="button" class="atom" title="Copper" value="Cu">Cu</button></td>
+	<td><button type="button" class="atom" title="Zinc" value="Zn">Zn</button></td>
+	<td><button type="button" class="atom" title="Galium" value="Ga">Ga</button></td>
+	<td><button type="button" class="atom" title="Germanium" value="Ge">Ge</button></td>
+	<td><button type="button" class="atom" title="Arsenic" value="As">As</button></td>
+	<td><button type="button" class="atom" title="Selenium" value="Se">Se</button></td>
+	<td><button type="button" class="atom" title="Bromine" value="Br">Br</button></td>
+	<td><button type="button" class="atom" title="Krypton" value="Kr">Kr</button></td>
+</tr>
+<tr>
+	<td><button type="button" class="atom" title="Rubidium" value="Rb">Rb</button></td>
+	<td><button type="button" class="atom" title="Strontium" value="Sr">Sr</button></td>
+	<td><button type="button" class="atom" title="Yitrium" value="Y">Y</button></td>
+	<td><button type="button" class="atom" title="Zincronium" value="Zr">Zr</button></td>
+	<td><button type="button" class="atom" title="Niobium" value="Nb">Nb</button></td>
+	<td><button type="button" class="atom" title="Molybdenum" value="Mo">Mo</button></td>
+	<td><button type="button" class="atom" title="Technitium" value="Tc">Tc</button></td>
+	<td><button type="button" class="atom" title="Ruthenium" value="Ru">Ru</button></td>
+	<td><button type="button" class="atom" title="Rhodium" value="Rh">Rh</button></td>
+	<td><button type="button" class="atom" title="Palladium" value="Pd">Pd</button></td>
+	<td><button type="button" class="atom" title="Silver" value="Ag">Ag</button></td>
+	<td><button type="button" class="atom" title="Cadmium" value="Cd">Cd</button></td>
+	<td><button type="button" class="atom" title="Indium" value="In">In</button></td>
+	<td><button type="button" class="atom" title="Tin" value="Sn">Sn</button></td>
+	<td><button type="button" class="atom" title="Antimony" value="Sb">Sb</button></td>
+	<td><button type="button" class="atom" title="Tellurium" value="Te">Te</button></td>
+	<td><button type="button" class="atom" title="Iodine" value="I">I</button></td>
+	<td><button type="button" class="atom" title="Xenon" value="Xe">Xe</button></td>
+</tr>
+<tr>
+	<td><button type="button" class="atom" title="Caesium" value="Cs">Cs</button></td>
+	<td><button type="button" class="atom" title="Barium" value="Ba">Ba</button></td>
+	<td><span class="noatom">*</span></td>
+	<td><button type="button" class="atom" title="Hafnium" value="Hf">Hf</button></td>
+	<td><button type="button" class="atom" title="Tantalum" value="Ta">Ta</button></td>
+	<td><button type="button" class="atom" title="Tungsten" value="W">W</button></td>
+	<td><button type="button" class="atom" title="Rhenium" value="Re">Re</button></td>
+	<td><button type="button" class="atom" title="Osmium" value="Os">Os</button></td>
+	<td><button type="button" class="atom" title="Iridium" value="Ir">Ir</button></td>
+	<td><button type="button" class="atom" title="Platinum" value="Pt">Pt</button></td>
+	<td><button type="button" class="atom" title="Gold" value="Au">Au</button></td>
+	<td><button type="button" class="atom" title="Mercury" value="Hg">Hg</button></td>
+	<td><button type="button" class="atom" title="Thallium" value="Tl">Tl</button></td>
+	<td><button type="button" class="atom" title="Lead" value="Pb">Pb</button></td>
+	<td><button type="button" class="atom" title="Bismuth" value="Bi">Bi</button></td>
+	<td><button type="button" class="atom" title="Polonium" value="Po">Po</button></td>
+	<td><button type="button" class="atom" title="Astatine" value="At">At</button></td>
+	<td><button type="button" class="atom" title="Radon" value="Rn">Rn</button></td>
+</tr>
+<tr>
+	<td><button type="button" class="atom" title="Francium" value="Fr">Fr</button></td>
+	<td><button type="button" class="atom" title="Radium" value="Ra">Ra</button></td>
+	<td><span class="noatom">**</span></td>
+	<td><button type="button" class="atom" title="Rutherfordium" value="Rf">Rf</button></td>
+	<td><button type="button" class="atom" title="Dubnium" value="Db">Db</button></td>
+	<td><button type="button" class="atom" title="Seaborgium" value="Sg">Sg</button></td>
+	<td><button type="button" class="atom" title="Bohrium" value="Bh">Bh</button></td>
+	<td><button type="button" class="atom" title="Hassium" value="Hs">Hs</button></td>
+	<td><button type="button" class="atom" title="Meitnerium" value="Mt">Mt</button></td>
+	<td><button type="button" class="atom" title="Darmstadtium" value="Ds">Ds</button></td>
+	<td><button type="button" class="atom" title="Roentgenium" value="Rg">Rg</button></td>
+	<td><button type="button" class="atom" title="Copernicium" value="Cn">Cn</button></td>
+	<td><button type="button" class="atom" title="Nihonium" value="Nh">Nh</button></td>
+	<td><button type="button" class="atom" title="Flerovium" value="Fl">Fl</button></td>
+	<td><button type="button" class="atom" title="Moscovium" value="Mc">Mc</button></td>
+	<td><button type="button" class="atom" title="Livermorium" value="Lv">Lv</button></td>
+	<td><button type="button" class="atom" title="Tennessine" value="Ts">Ts</button></td>
+	<td><button type="button" class="atom" title="Oganesson" value="Og">Og</button></td>
+</tr>
+<tr style="height:24px;">
+</tr>
+<tr>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom">*</span></td>
+	<td><button type="button" class="atom" title="lanthanum" value="La">La</button></td>
+	<td><button type="button" class="atom" title="Cerium" value="Ce">Ce</button></td>
+	<td><button type="button" class="atom" title="Parseodymium" value="Pr">Pr</button>
+	</td>
+	<td><button type="button" class="atom" title="Neodymium" value="Nb">Nd</button></td>
+	<td><button type="button" class="atom" title="Promethium" value="Pm">Pm</button></td>
+	<td><button type="button" class="atom" title="Samarium" value="Sm">Sm</button></td>
+	<td><button type="button" class="atom" title="Europium" value="Eu">Eu</button></td>
+	<td><button type="button" class="atom" title="Gadolinium" value="Gd">Gd</button></td>
+	<td><button type="button" class="atom" title="Terbium" value="Tb">Tb</button></td>
+	<td><button type="button" class="atom" title="Dysprosium" value="Dy">Dy</button></td>
+	<td><button type="button" class="atom" title="Holmium" value="Ho">Ho</button></td>
+	<td><button type="button" class="atom" title="Erbium" value="Er">Er</button></td>
+	<td><button type="button" class="atom" title="Thulium" value="Tm">Tm</button></td>
+	<td><button type="button" class="atom" title="Ytterbium" value="Yb">Yb</button></td>
+	<td><button type="button" class="atom" title="Lutetium" value="Lu">Lu</button></td>
+</tr>
+<tr>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom"></span></td>
+	<td><span class="noatom">**</span></td>
+	<td><button type="button" class="atom" title="Actinium" value="Ac">Ac</button></td>
+	<td><button type="button" class="atom" title="Thorium" value="Th">Th</button></td>
+	<td><button type="button" class="atom" title="Protactinium" value="Pa">Pa</button></td>
+	<td><button type="button" class="atom" title="Uranium" value="U">U</button></td>
+	<td><button type="button" class="atom" title="Neptunium" value="Np">Np</button></td>
+	<td><button type="button" class="atom" title="Plutonium" value="Pu">Pu</button></td>
+	<td><button type="button" class="atom" title="Americium" value="Am">Am</button></td>
+	<td><button type="button" class="atom" title="Curium" value="Cm">Cm</button></td>
+	<td><button type="button" class="atom" title="Berkelium" value="Bk">Bk</button></td>
+	<td><button type="button" class="atom" title="Californium" value="Cf">Cf</button></td>
+	<td><button type="button" class="atom" title="Einsteinium" value="Es">Es</button></td>
+	<td><button type="button" class="atom" title="Fermium" value="Fm">Fm</button></td>
+	<td><button type="button" class="atom" title="Mendelevium" value="Mb">Md</button></td>
+	<td><button type="button" class="atom" title="Nobelium" value="No">No</button></td>
+	<td><button type="button" class="atom" title="Lawrencium" value="Lr">Lr</button></td>
+</tr>
+</table>
+</div>
+<form id="reaction" method="post" action="Reaction_backend">
+	<input type="text" placeholder="Enter reaction here" size="65" id="reaction_inp">
+	<button type="button" class="arrow" onclick="add_arrow(this)" value="&#8658;" title="Right Arrow">&#8658;</button><br><br>
+	<button type="submit" class="go" onclick="convert()">GO</button>
+	<input type="hidden" id="hide" name="hide" value="0">
+	<input type="hidden" id="reaction_input" name="reaction" value="0">
+	<input type="hidden" id="sub" name="sub" value="₀₁₂₃₄₅₆₇₈₉">
+	<div id="append">
+	</div>
+</form>
+
+</body>
+</html>

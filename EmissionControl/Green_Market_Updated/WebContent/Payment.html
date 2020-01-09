@@ -1,0 +1,118 @@
+<html>
+<head>
+<meta charset="utf-8">
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>  
+<script>
+$(document).ready(function(){
+	$("#q").click(function(){
+		//alert("hi");
+		 $.post("pay",function(data){
+			 //alert(data);
+		      $("#resp").val(data);
+		      
+		      $("#payform").submit();
+		    });
+		//$("#payform").submit();
+	});
+});
+function readCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+function myFunction()
+{
+	var valu = readCookie('total');
+	//alert(valu);
+	document.getElementById("pay").value=valu;
+}
+
+</script>
+<style>
+div 
+{
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    padding-top: 10px;
+    padding-left:10px;
+}
+p{
+	font-size: 25px;
+}
+</style>
+</head>
+<body onload="myFunction()">
+<img src="1.png" width="50px;" height="50px;"><h1 style="margin-left: 60px;margin-top: -48px;font-size: 45px;">GreenMarket</h1>
+<div>
+<h2 style="font-size: 20px;color: darkblue">PLEASE FILL ALL THE PAYEMENT DETAILS</h2>
+<form method="post" action="SendMail" id="payform">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<p>Amount to be paid :</p>
+<select style="width:90px;height: 40px;font-size: 20px;float:right;margin-top: -55px;margin-right:910px;">
+<input type="text" style="width:90px;height: 40px;font-size: 20px;float:right;margin-top: -55px;margin-right:910px;" value="10,000" id="pay">
+</select>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<p>Select payment card: </p>
+<select style="width:90px;height: 40px;font-size: 20px;float: right;margin-top: -55px;margin-right:890px;">
+<option value="TE">Master Card</option>
+<option value="SE">Visa</option>
+<option value="PA">AMEX</option>
+</select>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<p>Card Number: </p> <input type = "text" method = "post" name = "cardno"style="width:120px;height: 40px;font-size: 20px;float: right;margin-top: -55px;margin-right:920px;">
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<p>Expiration Date: </p>
+<select style="width:90px;height: 40px;font-size: 20px;float: right;margin-top: -55px;margin-right:940px;">
+<option value="a">Month</option>
+<option value="a1">1</option>
+<option value="a2">2</option>
+<option value="a3">3</option>
+<option value="a4">4</option>
+<option value="a5">5</option>
+<option value="a6">6</option>
+<option value="a7">7</option>
+<option value="a8">8</option>
+<option value="a9">9</option>
+<option value="a10">10</option>
+<option value="a11">11</option>
+<option value="a12">12</option>
+</select>
+<select style="width:90px;height: 40px;font-size: 20px;float: right;margin-top: -55px;margin-right:820px;">
+<option value="z">Year</option>
+<option value="w2017">2017</option>
+<option value="w2018">2018</option>
+<option value="w2019">2019</option>
+<option value="w2020">2020</option>
+<option value="w2021">2021</option>
+<option value="w2022">2022</option>
+<option value="w2023">2023</option>
+<option value="w2024">2024</option>
+<option value="w2025">2025</option>
+<option value="w2026">2026</option>
+<option value="w2027">2027</option>
+<option value="w2028">2028</option>
+<option value="w2029">2029</option>
+<option value="w2030">2030</option>
+<option value="w2031">2031</option>
+<option value="w2032">2032</option>
+</select>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<p>CVV : </p><input type = "text" method = "post" name = "Cvv" style="width:90px;height: 40px;font-size: 20px;float: right;margin-top: -55px;margin-right:1040px;">
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<p>Name on Card : </p><input type = "text" method = "post" name = "CardName" style="width:90px;height: 40px;font-size: 20px;float: right;margin-top: -55px;margin-right:945px;">
+
+
+<button type="button" style="width:90px;height: 30px;font-size: 20px;" id="q">Submit</button>
+<input type="hidden" value="qwe" name="Email" id="resp">
+<input type="hidden" value="1" name="payment" id="resp1">
+
+
+</form>
+</div>
+</body>
+</html>
+

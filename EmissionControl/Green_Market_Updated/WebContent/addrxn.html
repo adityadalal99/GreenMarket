@@ -1,0 +1,177 @@
+<!DOCTYPE html >
+<html>
+<head>
+<meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<title>Insert title here</title>
+<style>
+
+h1
+{
+font-size:40px;
+}
+#div1
+{
+background-color: white;
+height: 340px;
+width:400px;
+margin-left: 500px;
+margin-right: 200px;
+margin-top: 200px;
+margin-bottom: 200px;
+padding: 30px;
+    text-align: center;
+border-width: thin;
+border-radius: 25px;
+      
+}
+body{
+width: 100%;
+height: 100%;
+margin: 0;
+padding: 0;
+background-color:#76b852;
+
+}
+.form
+{
+padding: 0px;
+}
+.a{
+border-radius: 8px;
+width: 130px;
+height: 40px;
+font-size: 20px;
+font-weight: lighter;
+font-family:Comic Sans MS; 
+}
+.form input
+{
+outline:0;
+cursor: auto;
+}
+a:link
+{
+color:#76b852;
+text-decoration:none;
+
+}
+a:visited
+{
+color:#76b852;
+text-decoration:none;
+}
+a:active
+{
+color:#76b852;
+text-decoration:none;
+}
+
+.message
+{
+color: #b3b3b3;
+}
+
+.form input
+{
+ background: #f2f2f2;
+
+}
+.formula
+{
+float:left;
+padding-left:30px;
+}
+.name
+{
+float:right;
+padding-right:30px;
+}
+.b
+{
+background-color:white;
+}
+</style>
+<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+<script>
+/*var incr = (function () {
+    var i = 1;
+
+    return function () {
+        return i++;
+    }
+})();*/
+$(document).ready(function(){
+	var i=1;
+$("#add").click(function () {
+  //var j=incr();
+  //var s=j.toString();
+  i=i+1;
+  var k=340+70*(i-1);
+  var j=i.toString();
+  var template='<div class="formula">\n' + 
+  '<input type="text" name="formula'+j+'" class="a c" id="formula'+j+'" placeholder=" Formula" id="Box1">\n' + 
+  '</div>\n' +
+  '<div class="name" id="base">\n' +
+  '<input type="text" name="name'+j+'" class="a" id="name'+j+'" placeholder=" Name" id="Box1">\n' +
+  '</div><br><br><br>\n' +
+  '</div>';
+  $("#div1").animate({height: k});
+  $("#append").append(template);
+  $("#hide").val(j);
+
+});
+$("#div1").on('input', ".c", function(e){
+	var s=$(this).val();
+	
+	var temp="";
+	var i=s.length;
+	var j=0;
+	var sub="₀₁₂₃₄₅₆₇₈₉"
+	if(s.charAt(i-1)>='0'&&s.charAt(i-1)<='9')
+		{
+		for(j=0;j<i-1;j++)
+			{
+			temp=temp+s.charAt(j);
+			}
+		var k=s.charAt(i-1);
+		var string=temp+sub.charAt(k-'0');
+		$(this).val(string);
+		//window.alert(string);
+		
+		}
+	
+	//alert(k);
+	
+	
+});
+});	
+</script>
+</head>
+<body>
+<div id="div1" style="width:30%">
+<form class="form" id="register" method="post" action="register">
+<h1>
+<b style="font-family: Comic Sans MS">Add Products</b>
+</h1><br>
+<div class="template">
+  <div class="formula">
+  <input type="text" name="formula" class="a c" id="formula1" placeholder=" Formula" id="Box1">
+  </div>
+  <div class="name" id="base">
+  <input type="text" name="name" class="a" id="name1" placeholder=" Name" id="Box1">
+  </div><br><br><br>
+  </div>
+  <div id="append"></div>
+ <input type="submit" value="REGISTER" style="background-color:#76b852; cursor: pointer; color:#ffffff; width:200px"  class="a" id="submitbutton"><br><br>
+  <button type="button" class="btn btn-light" style="height:75%" id="add">Add More Product</button>
+  <input type="hidden" id="hide" value="1">
+  
+</form>
+</div>
+</body>
+</html>
