@@ -17,7 +17,7 @@ Java, MySQL, PHP
 ## Screenshots
 <img src="https://github.com/adityadalal99/GreenMarket/blob/master/cart1.png" align="left" width="30%" height="auto" alt="Screenshot of App"/>
 <img src="https://github.com/adityadalal99/GreenMarket/blob/master/cart2.png" width="30%" height="auto" alt="Screenshot of App"/>
-<img src="https://github.com/adityadalal99/GreenMarket/blob/master/login.jpg" align="right" width="30%" height="auto" alt="Screenshot of App"/>
+<img src="https://github.com/adityadalal99/GreenMarket/blob/master/login.jpg" width="30%" height="auto" alt="Screenshot of App"/>
 <img src="https://github.com/adityadalal99/GreenMarket/blob/master/pROFILE.png" align="center" width="30%" height="auto" alt="Screenshot of App"/>
 <img src="https://github.com/adityadalal99/GreenMarket/blob/master/react.jpg" width="30%" height="auto" alt="Screenshot of App"/>
 
